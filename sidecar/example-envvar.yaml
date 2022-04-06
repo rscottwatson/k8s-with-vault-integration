@@ -1,0 +1,42 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-deployment
+  labels:
+    app: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+      annotations:
+        vault.hashicorp.com/agent-inject: 'true'
+        # the file /vault/secrets/envexample will be mounted in the pod with the result of the secret
+        # after it has been processed by the template
+        vault.hashicorp.com/agent-inject-secret-envexample: 'secret/database/mysql/dev'
+        vault.hashicorp.com/agent-inject-template-envexample: |
+          {{- with secret "secret/database/mysql/dev" -}}
+             export PG_USER="{{ .Data.data.username }}"
+             export PG_PASSWORD="{{ .Data.data.password }}"
+          {{- end }}
+        vault.hashicorp.com/role: 'example'
+        vault.hashicorp.com/auth-path: 'auth/k8s/vaultAgent'
+        vault.hashicorp.com/auth-type: 'kubernetes'
+    spec:
+      serviceAccountName: vault-auth
+      hostAliases:
+        - hostnames:
+            - "host.minikube.internal"
+          ip: "192.168.79.1" 
+      containers:
+        - name: web
+          image: alpine:latest
+          args:
+            ['sh', '-c', 'while true; do source /vault/secrets/envexample && date && env | grep "^PG" && sleep 30; done']
+          ports:
+            - containerPort: 9090

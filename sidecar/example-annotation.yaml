@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-example-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-example
+  template:
+    metadata:
+      labels:
+        app: app-example
+      annotations:
+        vault.hashicorp.com/agent-inject: 'true'
+        # the file /vault/secrets/db-creds will be mounted in the pod with the result of the secret
+        # after it has been processed by the template
+        vault.hashicorp.com/agent-inject-secret-db-creds: 'secret/database/mysql/dev'
+        vault.hashicorp.com/agent-inject-template-db-creds: |
+          {{- with secret "secret/database/mysql/dev" -}}
+          postgres://{{ .Data.data.username }}:{{ .Data.data.password }}@postgres:5432/appdb?sslmode=disable
+          {{- end }}
+        vault.hashicorp.com/role: 'example'
+        vault.hashicorp.com/auth-path: 'auth/k8s/vaultAgent'
+        vault.hashicorp.com/auth-type: 'kubernetes'
+        # vault.hashicorp.com/ca-cert: '/vault/tls/ca.crt'
+        # vault.hashicorp.com/client-cert: '/vault/tls/client.crt'
+        # vault.hashicorp.com/client-key: '/vault/tls/client.key'
+        # vault.hashicorp.com/tls-secret: 'vault-tls-client'
+    spec:
+      hostAliases:
+      - hostnames:
+          - "host.minikube.internal"
+        ip: "192.168.79.1"
+      containers:
+        - name: app
+          image: 'busybox:latest'
+          command: [ "/bin/sh", "-c", "--" ]
+          args: [ "while true; do sleep 30; done;" ]
+      serviceAccountName: vault-auth
