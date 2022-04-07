@@ -287,6 +287,15 @@ kubectl delete -f ./sidecar/example-envvar.yaml
 ```
 
 
+## Notes
+To restart a pod when a secret has changed we can use the vault-hashicorp-com-agent-inject-command to kill the pod and restart it.
+See this [demo](https://github.com/jasonodonnell/vault-agent-demo/blob/8900638491135bcf72aad3fc59022c4cf371f47a/examples/injector/dynamic-secrets/patch-annotations.yaml#L15) 
+- [issue](https://github.com/hashicorp/vault-k8s/issues/196)
+- Someone said to create another container that watches for OS changes and then will do a restart of the pod or deployment.  Not quite sure how to implemet this.
+
+There are some notes about how this doesn't work so well with istio.  This would need some investigation as istio is a pretty important service mesh.
+- [issue](https://github.com/hashicorp/vault-k8s/issues/41)
+
 
 ## references
 [Installing vault with helm](https://www.vaultproject.io/docs/platform/k8s/helm/run)
