@@ -100,7 +100,7 @@ vault kv put secret/database/mysql/dev username=admin password=not4you
 Create a service account in Kubernetes that will allow our pods to access our external Vault server.
 ```bash
 kubectl create serviceaccount vault-auth
-kubectl apply -f ./sidecar/learn-vault-agent/vault-agent-k8s-demo/vault-auth-service-account.yaml
+kubectl apply -f ./sidecar/vault-auth-service-account.yaml
 
 ```
 
@@ -171,6 +171,8 @@ Create a POD that will refernece the IP address of the host.minikube.internal ad
 # need to check that this doesn't have some character between the IP and hostname
 EXTERNAL_VAULT_ADDR=$(minikube ssh "cat /etc/hosts | grep host.minikube.internal | cut -d$'\t' -f1")
 
+Check that this external value was pouplated properly
+curl -s http://${EXTERNAL_VAULT_ADDR}:8200/v1/sys/seal-status
 
 cat > devwebapp.yaml << EOF 
 apiVersion: v1

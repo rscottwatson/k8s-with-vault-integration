@@ -138,10 +138,16 @@ vault write auth/k8s/vaultCSI/role/example \
 
 
 ## Examples
-1. kubectl apply -f ./csi/vault-example1.yaml 
+1. kubectl apply -f ./csi/vault-example-filesystem.yaml 
+- kubectl exec deploy/vault-example1 -- cat /mnt/secrets-store/dbUsername
+- kubectl exec deploy/vault-example1 -- cat /mnt/secrets-store/dbPassword
 
-
-
+Note that the secret example must also have the volume mount.  I tried to make is work without it at first and spent a long time trying to get this to work.  Eventually the [doc](https://secrets-store-csi-driver.sigs.k8s.io/topics/sync-as-kubernetes-secret.html) saved the day.
+2. kubectl apply -f ./csi/vault-example-secret.yaml 
+- kubectl exec deploy/vault-example2 -- cat /mnt/secrets-store/dbUsername
+- kubectl exec deploy/vault-example2 -- cat /mnt/secrets-store/dbPassword
+- kubectl get secret vault-db-creds-secret -o jsonpath={.data.username} | base64 -d
+- kubectl get secret vault-db-creds-secret -o jsonpath={.data.password} | base64 -d
 
 
 
