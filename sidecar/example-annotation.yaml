@@ -37,4 +37,11 @@ spec:
           image: 'busybox:latest'
           command: [ "/bin/sh", "-c", "--" ]
           args: [ "while true; do sleep 30; done;" ]
+          resources:
+            requests:
+              memory: "32mi"
+              cpu: "250m"
+            limits:
+              memory: "64mi"
+              cpu: "250m"
       serviceAccountName: vault-auth

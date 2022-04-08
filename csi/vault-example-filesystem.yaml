@@ -1,0 +1,62 @@
+---
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: vault-db-creds
+  namespace: default
+spec:
+  provider: vault
+  parameters:
+    roleName: 'example'
+    vaultAddress: 'http://192.168.79.1:8200'
+    vaultKubernetesMountPath: 'k8s/vaultCSI'
+    objects: |
+      - objectName: "dbUsername"
+        secretPath: "secret/data/database/mysql/dev"
+        secretKey: "username"
+      - objectName: "dbPassword"
+        secretPath: "secret/data/database/mysql/dev"
+        secretKey: "password"
+---        
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vault-example1
+  namespace: default 
+  labels:
+    app: demo-app1
+spec:
+  selector:
+    matchLabels:
+      app: demo-app1
+  replicas: 1
+  template:
+    metadata:
+      annotations: {}
+      labels:
+        app: demo-app1
+    spec:
+      serviceAccountName: myapp-csi-sa
+      containers:
+        - name: app
+          image: busybox:latest
+          command: [ "/bin/sh", "-c", "--" ]
+          args: [ "while true; do sleep 30; done;" ]
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "250m"
+            limits:
+              memory: "64Mi"
+              cpu: "250m"
+          volumeMounts:
+            - name: 'vault-db-creds'
+              mountPath: '/mnt/secrets-store'
+              readOnly: true
+      volumes:
+        - name: vault-db-creds
+          csi:
+            driver: 'secrets-store.csi.k8s.io'
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: 'vault-db-creds'
