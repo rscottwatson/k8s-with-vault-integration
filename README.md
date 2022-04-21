@@ -27,7 +27,7 @@ There are some notes about how this doesn't work so well with istio.  This would
 - [issue with istio and agent injector](https://github.com/hashicorp/vault-k8s/issues/41)
 
 ## Issues
-Since the minikube cluster does not expose the host.minikube.internal name to the resources running in the cluster, I had to either add the following to the pod/deployment definition or change the VAULT URL to the IP address of my host gateway so that I could access the Vault server runing in my terminal session on my desktop.
+Since the minikube cluster does not resolve the /etc/hosts alias host.minikube.internal from within PODS running in the cluster, I had to either add the following to the pod/deployment definition or change the VAULT URL to the IP address of my host gateway so that I could access the Vault server runing in my terminal session on my desktop.
 
       hostAliases:
       - hostnames:
@@ -37,7 +37,7 @@ Since the minikube cluster does not expose the host.minikube.internal name to th
 You will need to update the ip to your gateway IP address. 
 TODO: Change this to use kustomize?
 
-Minikube kept setting my gateway to 192.168.68.1 yet that was not the IP address of my bridge network on my host so I had to make sure it was set properly each time I started minikube.
+Minikube kept setting my /etc/hosts entry for host.minikube.internal to 192.168.68.1 yet that was not the IP address of my bridge network on my host so I had to make sure it was set properly each time I started minikube.
 ## References
 - [Installing Vault with Helm](https://www.vaultproject.io/docs/platform/k8s/helm/run)
   - [Helm configuration](https://www.vaultproject.io/docs/platform/k8s/helm/configuration)
