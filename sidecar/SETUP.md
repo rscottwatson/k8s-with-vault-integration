@@ -37,8 +37,8 @@ minikube config set profile vaultAgent
 ```
 
 
-Use helm to export a template of the yaml used to deploy the kubernetes resources for the agent injector.
-Using helm is an options but I want to see if I can eventually use ArgoCD to deploy this with Kustomize which is why I am not using helm.  Plus I am not a fan of helm with no real reason other than I don't feel this is the way forward.
+Vault uses helm to deploy the kubernetes resources for the agent injector as the recommended way to install vault in k8s.
+However, at some point I want to convert this to plain yaml as I want to use ArgoCD to deploy this with Kustomize instead of helm. The main reason is that I see more and more people not using/supportin helm and if I were to use ArgoCD I would like to standardize on Kustomize instead of helm.
 TODO
 
 ```bash
@@ -72,8 +72,9 @@ helm install vault hashicorp/vault --set "injector.enabled=true" \
 #   $ helm status vault
 #   $ helm get manifest vault
 
-
+# To extract the YAML to a file use the following.
 helm template \
+    --set "server.enabled=false" \
     --set="injector.enabled=true" \
     --set "injector.externalVaultAddr=http://host.minikube.internal:8200" \
     hashicorp/vault > sidecar/vault_injector.yaml
@@ -82,10 +83,12 @@ helm template \
 
 Get the code from hashicorp.  This is to be used as a reference incase I need it later for now I have copied the only yaml out.
 ```bash
+mkdir sidecar
 cd sidecar
 git clone https://github.com/hashicorp/vault-guides.git
 git clone https://github.com/hashicorp/learn-vault-agent.git
-cd vault-guides/operations/provision-vault/kubernetes/minikube/vault-agent-sidecar
+cd ..
+# cd vault-guides/operations/provision-vault/kubernetes/minikube/vault-agent-sidecar
 
 ```
 
@@ -104,7 +107,7 @@ kubectl apply -f ./sidecar/vault-auth-service-account.yaml
 
 ```
 
-Create a policy that grants access to the secret in vault.
+Create a policy that grants access to the secret in vault. NOTE The path includes the extra level "data".
 ```
 vault policy write myapp-kv-ro - <<EOF
 path "secret/data/database/mysql/*" {
@@ -117,7 +120,7 @@ EOF
 Setup Vault to allow authentication with kubernetes auth provider. 
 Using the kubernetes service account is the best method and approle should be a fallback according to [this](https://www.hashicorp.com/blog/how-and-why-to-use-approle-correctly-in-hashicorp-vault).
 
-When using the k8s provider we need to do some initial setup as we need to let vault know about the Service Account (SA) that is going to be connecting.  Also k8s needs to be able to connect to vault and vault needs to be able to connect to k8s as well.
+When using the k8s provider we need to do some initial setup as we need to let vault know about the Service Account (SA) that is going to be connecting.  There has to be bi-directional communication from Vault to the kubernetes cluster. 
 
 
 ```bash
